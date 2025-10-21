@@ -36,4 +36,5 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: learning-management-system
           directory: dist
+          wranglerVersion: '3'
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}

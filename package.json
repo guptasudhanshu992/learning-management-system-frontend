@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "pages:dev": "wrangler pages dev -- npm run dev",
-    "pages:deploy": "wrangler pages publish dist --project-name=learning-management-system",
+    "pages:deploy": "wrangler pages publish dist --project-name=learning-management-system --build-output-directory=dist",
     "deploy": "npm run build && npm run pages:deploy"
   },
   "dependencies": {

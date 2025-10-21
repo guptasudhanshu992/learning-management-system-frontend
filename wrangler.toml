@@ -1,7 +1,8 @@
 name = "learning-management-system"
 compatibility_date = "2023-10-21"
 
-# This is the specific configuration for Pages deployments
+# Cloudflare Pages configuration
+pages = { project_name = "learning-management-system" }
 pages_build_output_dir = "dist"
 
 # Environment variables
