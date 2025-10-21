@@ -1,0 +1,13 @@
+{
+  "name": "learning-management-system",
+  "build": {
+    "command": "npm run build",
+    "output_directory": "dist",
+    "root_directory": "."
+  },
+  "deployment": {
+    "environment": {
+      "VITE_API_URL": "https://api.yourdomain.com"
+    }
+  }
+}
