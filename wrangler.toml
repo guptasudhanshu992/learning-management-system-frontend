@@ -1,6 +1,25 @@
 name = "learning-management-system"
+main = "./functions/_worker.js"
 compatibility_date = "2023-10-21"
 compatibility_flags = ["nodejs_compat"]
 
 [site]
 bucket = "./dist"
+
+[build]
+command = "npm run build"
+
+[functions]
+# Directory containing your worker functions
+directory = "functions"
+
+# Environment variables (these will be replaced with real values in the Cloudflare dashboard)
+[vars]
+BACKEND_API_URL = "http://localhost:8001"
+
+# Add additional environments as needed
+[env.production]
+vars = { BACKEND_API_URL = "https://api.yourdomain.com" }
+
+[env.staging]
+vars = { BACKEND_API_URL = "https://staging-api.yourdomain.com" }
