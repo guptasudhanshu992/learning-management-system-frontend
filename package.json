@@ -9,12 +9,14 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "pages:dev": "wrangler pages dev -- npm run dev",
-    "pages:dev:workers": "wrangler pages dev dist --compatibility-date=2023-10-21 --compatibility-flag=nodejs_compat",
-    "pages:deploy": "npm run build && wrangler pages deploy dist",
-    "pages:deploy:prod": "npm run build && wrangler pages deploy dist --env production",
-    "worker:deploy": "npm run build && wrangler deploy"
+    "pages:deploy": "npm run build && wrangler pages publish dist --project-name=learning-management-system",
+    "pages:direct": "wrangler pages publish dist --project-name=learning-management-system",
+    "worker:build": "cd workers-site && npm install && cd ..",
+    "worker:deploy": "npm run build && npm run worker:build && wrangler deploy",
+    "deploy": "node deploy.js"
   },
   "dependencies": {
+    "@cloudflare/kv-asset-handler": "^0.4.0",
     "axios": "^1.7.7",
     "framer-motion": "^11.5.4",
     "lucide-react": "^0.445.0",
