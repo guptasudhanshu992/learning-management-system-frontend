@@ -5,6 +5,11 @@ import { Lock, CheckCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import axios from 'axios'
 
+// Configure API with base URL
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8001',
+})
+
 export default function ResetPassword() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -33,7 +38,7 @@ export default function ResetPassword() {
     setIsLoading(true)
     try {
       // TODO: Replace with actual API endpoint
-      await axios.post(`/api/auth/reset-password/${token}`, { password })
+      await api.post(`/auth/reset-password/${token}`, { password })
       toast.success('Password reset successful!')
       setTimeout(() => navigate('/login'), 2000)
     } catch (error: any) {

@@ -1,0 +1,6 @@
+name = "learning-management-system"
+compatibility_date = "2023-10-21"
+compatibility_flags = ["nodejs_compat"]
+
+[site]
+bucket = "./dist"

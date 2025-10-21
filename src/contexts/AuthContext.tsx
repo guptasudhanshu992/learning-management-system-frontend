@@ -1,6 +1,11 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import axios from 'axios'
 
+// Configure Axios with base URL from environment variables
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8001',
+})
+
 interface User {
   id: string
   email: string
@@ -32,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (storedToken && storedUser) {
       setToken(storedToken)
       setUser(JSON.parse(storedUser))
-      axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`
+      api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`
     }
     
     setIsLoading(false)
@@ -61,13 +66,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${mockToken}`
       
       // Uncomment this when you have a real backend:
-      // const response = await axios.post('/api/auth/login', { email, password })
+      // const response = await api.post('/auth/login', { email, password })
       // const { token: newToken, user: userData } = response.data
       // setToken(newToken)
       // setUser(userData)
       // localStorage.setItem('token', newToken)
       // localStorage.setItem('user', JSON.stringify(userData))
-      // axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
+      // api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
     } catch (error) {
       throw error
     }
@@ -95,13 +100,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${mockToken}`
       
       // Uncomment this when you have a real backend:
-      // const response = await axios.post('/api/auth/register', { name, email, password })
+      // const response = await api.post('/auth/register', { name, email, password })
       // const { token: newToken, user: userData } = response.data
       // setToken(newToken)
       // setUser(userData)
       // localStorage.setItem('token', newToken)
       // localStorage.setItem('user', JSON.stringify(userData))
-      // axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
+      // api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
     } catch (error) {
       throw error
     }
@@ -112,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
     localStorage.removeItem('token')
     localStorage.removeItem('user')
-    delete axios.defaults.headers.common['Authorization']
+    delete api.defaults.headers.common['Authorization']
   }
 
   return (

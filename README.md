@@ -59,6 +59,46 @@ A modern, professional frontend application for a Learning Management System bui
 
 ## 🌐 Deployment on Cloudflare Pages
 
+### Option 1: Using Wrangler CLI (Recommended)
+
+1. **Set up Cloudflare Credentials:**
+   ```powershell
+   npx wrangler login
+   ```
+
+2. **Test your application locally with Cloudflare Pages:**
+   ```powershell
+   npm run pages:dev
+   ```
+
+3. **Deploy your application:**
+   ```powershell
+   npm run pages:deploy
+   ```
+
+3. **Environment Variables (if needed):**
+   - Add environment variables to your `wrangler.toml` file
+   ```toml
+   [vars]
+   API_URL = "https://api.example.com"
+   ```
+
+### Option 3: GitHub Actions Automated Deployment
+
+This project is configured with GitHub Actions for automatic deployment:
+
+1. **Add Cloudflare Secrets to GitHub:**
+   - Go to your GitHub repository
+   - Navigate to Settings > Secrets and variables > Actions
+   - Add the following secrets:
+     - `CLOUDFLARE_API_TOKEN`: Your Cloudflare API token
+     - `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare account ID
+
+2. **Push to GitHub:**
+   - When you push to the `main` branch, GitHub Actions will automatically build and deploy your application to Cloudflare Pages
+
+### Option 2: Via Cloudflare Dashboard
+
 1. **Push to GitHub:**
    ```powershell
    git init
