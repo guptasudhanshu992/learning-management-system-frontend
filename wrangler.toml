@@ -1,18 +1,12 @@
 name = "learning-management-system"
-project_name = "learning-management-system"
 compatibility_date = "2023-10-21"
-compatibility_flags = ["nodejs_compat"]
 
 # This is the specific configuration for Pages deployments
 pages_build_output_dir = "dist"
 
-# Environment variables (these will be replaced with real values in the Cloudflare dashboard)
+# Environment variables
 [vars]
-BACKEND_API_URL = "http://localhost:8001"
+VITE_API_URL = "http://localhost:8001"
 
-# Add additional environments as needed
 [env.production]
-vars = { BACKEND_API_URL = "https://api.yourdomain.com" }
-
-[env.staging]
-vars = { BACKEND_API_URL = "https://staging-api.yourdomain.com" }
+vars = { VITE_API_URL = "https://api.yourdomain.com" }

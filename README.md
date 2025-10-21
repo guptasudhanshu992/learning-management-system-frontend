@@ -203,7 +203,40 @@ npm run lint
 
 This project is licensed under the MIT License.
 
-## 👥 Contributing
+## � Troubleshooting Deployment
+
+### Common Issues and Solutions
+
+1. **"Missing script: deploy" Error**
+   - Ensure your package.json has the correct scripts:
+     ```json
+     "scripts": {
+       "pages:deploy": "wrangler pages publish dist --project-name=learning-management-system",
+       "deploy": "npm run build && npm run pages:deploy"
+     }
+     ```
+
+2. **Authentication Issues with Wrangler**
+   - Run `npx wrangler login` to authenticate
+   - For CI/CD, use API tokens instead of browser-based authentication
+   - Ensure you have added the correct `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets
+
+3. **Build Errors**
+   - Check for TypeScript errors: `npm run lint`
+   - Ensure all dependencies are installed: `npm ci`
+   - Check build output for specific errors: `npm run build`
+
+4. **Deployment Not Reflecting Changes**
+   - Ensure you're deploying the correct branch
+   - Clear browser cache or use incognito mode
+   - Check Cloudflare Pages build logs for issues
+
+5. **Environment Variable Problems**
+   - Verify that environment variables in wrangler.toml are correct
+   - For production, check that `[env.production]` section has proper values
+   - Environment variables must be prefixed with `VITE_` to be accessible in the frontend
+
+## �👥 Contributing
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)

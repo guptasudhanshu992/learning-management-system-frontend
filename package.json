@@ -1,5 +1,5 @@
 {
-  "name": "lms-frontend",
+  "name": "learning-management-system",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -9,10 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "pages:dev": "wrangler pages dev -- npm run dev",
-    "pages:direct": "wrangler pages publish dist --project-name=learning-management-system",
-    "worker:build": "cd workers-site && npm install && cd ..",
-    "worker:deploy": "npm run build && npm run worker:build && wrangler deploy",
-    "deploy": "wrangler pages deploy dist --project-name=learning-management-system"
+    "pages:deploy": "wrangler pages publish dist --project-name=learning-management-system",
+    "deploy": "npm run build && npm run pages:deploy"
   },
   "dependencies": {
     "@cloudflare/kv-asset-handler": "^0.4.0",
