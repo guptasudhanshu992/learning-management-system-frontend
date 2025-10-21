@@ -1,15 +1,12 @@
 name = "learning-management-system"
-type = "javascript"
-account_id = ""
-workers_dev = true
-route = ""
-zone_id = ""
 compatibility_date = "2023-10-21"
 compatibility_flags = ["nodejs_compat"]
 
+# This is the specific configuration for Pages deployments
+pages_build_output_dir = "dist"
+
 [site]
 bucket = "./dist"
-entry-point = "workers-site"
 
 [build]
 command = "npm run build"
