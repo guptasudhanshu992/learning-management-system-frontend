@@ -34,6 +34,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: learning-management-system
+          projectName: lms
           directory: dist
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}

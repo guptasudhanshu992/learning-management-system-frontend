@@ -211,7 +211,7 @@ This project is licensed under the MIT License.
    - Ensure your package.json has the correct scripts:
      ```json
      "scripts": {
-       "pages:deploy": "wrangler pages publish dist --project-name=learning-management-system",
+       "pages:deploy": "wrangler pages publish dist --project-name=lms",
        "deploy": "npm run build && npm run pages:deploy"
      }
      ```

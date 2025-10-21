@@ -1,6 +1,6 @@
 {
-  "name": "learning-management-system",
-  "project_name": "learning-management-system",
+  "name": "lms",
+  "project_name": "lms",
   "build_output_directory": "dist",
   "main_branch": "main",
   "build_command": "npm run build",

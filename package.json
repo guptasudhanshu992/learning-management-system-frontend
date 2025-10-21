@@ -1,5 +1,5 @@
 {
-  "name": "learning-management-system",
+  "name": "lms",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "pages:dev": "wrangler pages dev -- npm run dev",
-    "pages:deploy": "wrangler pages deploy dist --project-name learning-management-system",
+    "pages:deploy": "wrangler pages deploy dist --project-name lms",
     "deploy": "npm run build && npm run pages:deploy"
   },
   "dependencies": {

@@ -1,5 +1,5 @@
 {
-  "name": "learning-management-system",
+  "name": "lms",
   "type": "pages",
   "pages": {
     "build_command": "npm run build",
