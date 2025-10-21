@@ -1,5 +1,9 @@
 {
+  "name": "learning-management-system",
   "project_name": "learning-management-system",
   "build_output_directory": "dist",
-  "main_branch": "main"
+  "main_branch": "main",
+  "build_command": "npm run build",
+  "destination_dir": "dist",
+  "root_dir": "."
 }

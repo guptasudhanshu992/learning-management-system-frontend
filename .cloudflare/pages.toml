@@ -1,0 +1,13 @@
+[build]
+# Build command to run when deploying
+command = "npm run build"
+# Directory to output the build to (relative to project root)
+output_dir = "dist"
+
+[site]
+# Base directory from which to serve files. Default is output_dir
+base_dir = "dist"
+
+[env]
+# Specify the Node.js version to use
+NODE_VERSION = "20"
