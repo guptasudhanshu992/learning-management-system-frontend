@@ -5,16 +5,6 @@ compatibility_flags = ["nodejs_compat"]
 # This is the specific configuration for Pages deployments
 pages_build_output_dir = "dist"
 
-[site]
-bucket = "./dist"
-
-[build]
-command = "npm run build"
-
-[functions]
-# Directory containing your worker functions
-directory = "functions"
-
 # Environment variables (these will be replaced with real values in the Cloudflare dashboard)
 [vars]
 BACKEND_API_URL = "http://localhost:8001"
