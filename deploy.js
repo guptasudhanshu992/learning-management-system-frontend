@@ -16,7 +16,7 @@ exec('npm run build', (err, stdout, stderr) => {
   
   // Deploy to Cloudflare Pages
   console.log('� Deploying to Cloudflare Pages...');
-  exec('wrangler pages deploy dist --project-name=learning-management-system', (err, stdout, stderr) => {
+  exec('npx wrangler pages deploy dist --project-name=learning-management-system', (err, stdout, stderr) => {
     if (err) {
       console.error('❌ Deployment failed:', stderr);
       process.exit(1);
