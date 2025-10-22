@@ -783,7 +783,7 @@ export default function Checkout() {
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
                 
                 <div className="mb-6 max-h-60 overflow-y-auto space-y-4">
-                  {items.map((item) => (
+                  {items.map((item: any) => (
                     <div key={item.id} className="flex items-center pb-3 border-b border-gray-100 last:border-b-0 last:pb-0">
                       <div className="w-16 h-16 rounded overflow-hidden flex-shrink-0">
                         <img

@@ -67,11 +67,11 @@ export default function AdminLayout() {
             <div className="flex items-center px-4 py-3 mb-2 bg-gray-50 rounded-lg">
               <div className="flex-shrink-0 w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
                 <span className="text-sm font-medium text-primary-600">
-                  {user?.name?.charAt(0).toUpperCase()}
+                  {user?.full_name?.charAt(0).toUpperCase()}
                 </span>
               </div>
               <div className="ml-3 flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{user?.name}</p>
+                <p className="text-sm font-medium text-gray-900 truncate">{user?.full_name}</p>
                 <p className="text-xs text-gray-500 truncate">{user?.email}</p>
               </div>
             </div>
@@ -100,7 +100,7 @@ export default function AdminLayout() {
               </button>
               <div className="flex items-center space-x-4">
                 <span className="text-sm text-gray-600">
-                  Welcome, <span className="font-medium text-gray-900">{user?.name}</span>
+                  Welcome, <span className="font-medium text-gray-900">{user?.full_name}</span>
                 </span>
               </div>
             </div>

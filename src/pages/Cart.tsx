@@ -1,79 +1,155 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Trash2,
   ShoppingCart,
   ChevronRight,
-  PlusCircle,
-  MinusCircle,
   AlertCircle,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { useCart } from '../contexts/CartContext'
+import { CartService } from '../services/cartService'
+import { useAuth } from '../contexts/AuthContext'
+import { useAsync } from '../hooks/useLoading'
+import { CartItem, Course } from '../types/api'
+import { PageLoading } from '../components/ui/Loading'
+
+interface CartDetailsResponse {
+  items: Array<CartItem & { course: Course }>;
+  total_items: number;
+  total_amount: number;
+  discount_amount?: number;
+  final_amount: number;
+  applied_coupon?: {
+    code: string;
+    discount_type: 'percentage' | 'fixed';
+    discount_value: number;
+  };
+}
 
 export default function Cart() {
   const navigate = useNavigate()
-  const { items, removeFromCart, updateQuantity, clearCart, subtotal, discount } = useCart()
+  const { user } = useAuth()
+  const [cartDetails, setCartDetails] = useState<CartDetailsResponse | null>(null)
   const [couponCode, setCouponCode] = useState('')
   const [couponError, setCouponError] = useState<string | null>(null)
-  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null)
-  const [couponDiscount, setCouponDiscount] = useState(0)
 
-  // Mocked available coupons
-  const availableCoupons = {
-    'NEWUSER20': 20,   // 20% off
-    'WELCOME15': 15,   // 15% off
-    'FLASH10': 10,     // 10% off
+  // Async hooks
+  const { execute: fetchCartDetails, isLoading: cartLoading } = useAsync(CartService.getCartDetails)
+  const { execute: removeFromCartAPI, isLoading: removingItem } = useAsync(CartService.removeFromCart)
+  const { execute: clearCartAPI, isLoading: clearingCart } = useAsync(CartService.clearCart)
+  const { execute: applyCouponAPI } = useAsync(CartService.applyCoupon)
+  const { execute: removeCouponAPI } = useAsync(CartService.removeCoupon)
+
+  useEffect(() => {
+    if (user) {
+      loadCartDetails()
+    }
+  }, [user])
+
+  const loadCartDetails = async () => {
+    try {
+      const details = await fetchCartDetails()
+      if (details) {
+        setCartDetails(details)
+      }
+    } catch (error) {
+      console.error('Error loading cart details:', error)
+      toast.error('Failed to load cart details')
+    }
   }
 
-  const handleApplyCoupon = () => {
+  const handleRemoveFromCart = async (courseId: string) => {
+    try {
+      await removeFromCartAPI(courseId)
+      toast.success('Course removed from cart')
+      // Reload cart details
+      loadCartDetails()
+    } catch (error) {
+      toast.error('Failed to remove course from cart')
+    }
+  }
+
+  const handleClearCart = async () => {
+    if (!window.confirm('Are you sure you want to clear your cart?')) return
+
+    try {
+      await clearCartAPI()
+      setCartDetails(prev => prev ? { ...prev, items: [], total_items: 0, total_amount: 0, final_amount: 0 } : null)
+      toast.success('Cart cleared')
+    } catch (error) {
+      toast.error('Failed to clear cart')
+    }
+  }
+
+  const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
       setCouponError('Please enter a coupon code')
       return
     }
 
-    // Check if coupon is valid
-    const couponKey = couponCode.toUpperCase() as keyof typeof availableCoupons
-    const discountPercent = availableCoupons[couponKey]
-
-    if (discountPercent) {
-      const discountAmount = (subtotal * discountPercent) / 100
-      setCouponDiscount(discountAmount)
-      setAppliedCoupon(couponCode.toUpperCase())
-      setCouponError(null)
-      toast.success(`Coupon applied! ${discountPercent}% off`)
-      setCouponCode('')
-    } else {
+    try {
+      const result = await applyCouponAPI(couponCode)
+      if (result) {
+        toast.success('Coupon applied successfully!')
+        setCouponCode('')
+        setCouponError(null)
+        // Reload cart details to get updated totals
+        loadCartDetails()
+      }
+    } catch (error) {
       setCouponError('Invalid or expired coupon code')
-      setAppliedCoupon(null)
-      setCouponDiscount(0)
+      toast.error('Failed to apply coupon')
     }
   }
 
-  const handleRemoveCoupon = () => {
-    setAppliedCoupon(null)
-    setCouponDiscount(0)
-    toast.success('Coupon removed')
+  const handleRemoveCoupon = async () => {
+    try {
+      await removeCouponAPI()
+      toast.success('Coupon removed')
+      // Reload cart details
+      loadCartDetails()
+    } catch (error) {
+      toast.error('Failed to remove coupon')
+    }
   }
 
-  // Calculate totals
-  const finalDiscount = discount + couponDiscount
-  const finalTotal = subtotal - finalDiscount
-  const tax = finalTotal * 0.18 // 18% tax
-  const orderTotal = finalTotal + tax
-
   // Check if cart is empty
-  const isCartEmpty = items.length === 0
+  const isCartEmpty = !cartDetails || cartDetails.items.length === 0
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ShoppingCart className="w-10 h-10 text-gray-400" />
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-700 mb-3">Please login to view your cart</h2>
+            <p className="text-gray-500 mb-6">
+              You need to be logged in to access your shopping cart.
+            </p>
+            <Link to="/auth/login">
+              <button className="btn-primary px-8">Login</button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (cartLoading) {
+    return <PageLoading />
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mr-3">Shopping Cart</h1>
-          {items.length > 0 && (
+          {cartDetails && cartDetails.items.length > 0 && (
             <span className="bg-primary-100 text-primary-800 text-sm font-medium py-1 px-3 rounded-full">
-              {items.length} {items.length === 1 ? 'Course' : 'Courses'}
+              {cartDetails.items.length} {cartDetails.items.length === 1 ? 'Course' : 'Courses'}
             </span>
           )}
         </div>
@@ -96,14 +172,14 @@ export default function Cart() {
             {/* Cart Items */}
             <div className="lg:col-span-2">
               <div className="bg-white rounded-lg shadow-sm divide-y divide-gray-200">
-                {items.map((item) => (
+                {cartDetails!.items.map((item) => (
                   <div key={item.id} className="p-6">
                     <div className="flex flex-col sm:flex-row">
                       {/* Course Thumbnail */}
                       <div className="sm:w-40 mb-4 sm:mb-0">
                         <img
-                          src={item.thumbnail}
-                          alt={item.title}
+                          src={item.course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400'}
+                          alt={item.course.title}
                           className="w-full h-24 object-cover rounded-lg"
                         />
                       </div>
@@ -112,54 +188,33 @@ export default function Cart() {
                       <div className="flex-1 sm:ml-6 flex flex-col">
                         <div className="flex justify-between mb-2">
                           <Link
-                            to={`/courses/${item.id}`}
+                            to={`/courses/${item.course.id}`}
                             className="text-lg font-semibold text-gray-900 hover:text-primary-600"
                           >
-                            {item.title}
+                            {item.course.title}
                           </Link>
                           <button
-                            onClick={() => removeFromCart(item.id)}
-                            className="text-red-500 hover:text-red-700 transition-colors"
+                            onClick={() => handleRemoveFromCart(item.course_id)}
+                            disabled={removingItem}
+                            className="text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
                           >
                             <Trash2 className="w-5 h-5" />
                           </button>
                         </div>
 
-                        <p className="text-gray-500 text-sm mb-3">By {item.instructor}</p>
+                        <p className="text-gray-500 text-sm mb-3">By {item.course.instructor_name}</p>
+                        <p className="text-gray-600 text-sm mb-3 line-clamp-2">{item.course.description}</p>
 
-                        {/* Quantity Controls */}
-                        <div className="flex items-center mt-auto">
-                          <button
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            disabled={item.quantity <= 1}
-                            className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50"
-                          >
-                            <MinusCircle className="w-5 h-5 text-gray-500" />
-                          </button>
-                          <span className="px-3 font-medium">{item.quantity}</span>
-                          <button
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="p-1 rounded-full hover:bg-gray-100"
-                          >
-                            <PlusCircle className="w-5 h-5 text-gray-500" />
-                          </button>
+                        <div className="mt-auto flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-500">Students:</span>
+                            <span className="text-sm font-medium">{item.course.students_count || 0}</span>
+                          </div>
 
-                          <div className="ml-auto flex flex-col items-end">
-                            <div className="flex items-center space-x-2">
-                              <span className="text-xl font-bold text-gray-900">
-                                ${(item.price * item.quantity).toFixed(2)}
-                              </span>
-                              {item.originalPrice && (
-                                <span className="text-sm text-gray-500 line-through">
-                                  ${(item.originalPrice * item.quantity).toFixed(2)}
-                                </span>
-                              )}
-                            </div>
-                            {item.originalPrice && (
-                              <span className="text-xs text-green-600 font-medium">
-                                Save ${((item.originalPrice - item.price) * item.quantity).toFixed(2)}
-                              </span>
-                            )}
+                          <div className="flex flex-col items-end">
+                            <span className="text-xl font-bold text-gray-900">
+                              ${item.course.price?.toFixed(2) || '0.00'}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -169,15 +224,11 @@ export default function Cart() {
 
                 <div className="p-6 text-right">
                   <button
-                    onClick={() => {
-                      if (window.confirm('Are you sure you want to clear your cart?')) {
-                        clearCart()
-                        toast.success('Cart cleared')
-                      }
-                    }}
-                    className="text-sm text-red-600 hover:text-red-800 font-medium"
+                    onClick={handleClearCart}
+                    disabled={clearingCart}
+                    className="text-sm text-red-600 hover:text-red-800 font-medium disabled:opacity-50"
                   >
-                    Clear Cart
+                    {clearingCart ? 'Clearing...' : 'Clear Cart'}
                   </button>
                 </div>
               </div>
@@ -191,20 +242,20 @@ export default function Cart() {
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium text-gray-900">${subtotal.toFixed(2)}</span>
+                    <span className="font-medium text-gray-900">${cartDetails!.total_amount.toFixed(2)}</span>
                   </div>
                   
-                  {discount > 0 && (
+                  {cartDetails!.discount_amount && cartDetails!.discount_amount > 0 && (
                     <div className="flex justify-between text-green-600">
-                      <span>Course Discount</span>
-                      <span>-${discount.toFixed(2)}</span>
+                      <span>Discount</span>
+                      <span>-${cartDetails!.discount_amount.toFixed(2)}</span>
                     </div>
                   )}
                   
-                  {appliedCoupon && (
+                  {cartDetails!.applied_coupon && (
                     <div className="flex justify-between text-green-600">
                       <span className="flex items-center">
-                        Coupon: {appliedCoupon}
+                        Coupon: {cartDetails!.applied_coupon.code}
                         <button
                           onClick={handleRemoveCoupon}
                           className="ml-2 text-xs text-red-500 hover:text-red-700"
@@ -212,28 +263,32 @@ export default function Cart() {
                           Remove
                         </button>
                       </span>
-                      <span>-${couponDiscount.toFixed(2)}</span>
+                      <span>
+                        -{cartDetails!.applied_coupon.discount_type === 'percentage' ? 
+                          `${cartDetails!.applied_coupon.discount_value}%` : 
+                          `$${cartDetails!.applied_coupon.discount_value}`}
+                      </span>
                     </div>
                   )}
                   
                   <div className="flex justify-between border-t border-b border-gray-200 py-3 my-3">
                     <span className="font-medium text-gray-900">Total</span>
-                    <span className="font-bold text-gray-900">${finalTotal.toFixed(2)}</span>
+                    <span className="font-bold text-gray-900">${cartDetails!.final_amount.toFixed(2)}</span>
                   </div>
                   
                   <div className="flex justify-between">
                     <span className="text-gray-600">Tax (18%)</span>
-                    <span className="font-medium text-gray-900">${tax.toFixed(2)}</span>
+                    <span className="font-medium text-gray-900">${(cartDetails!.final_amount * 0.18).toFixed(2)}</span>
                   </div>
                   
                   <div className="flex justify-between text-lg font-bold text-primary-700 border-t border-gray-200 pt-3 mt-3">
                     <span>Order Total</span>
-                    <span>${orderTotal.toFixed(2)}</span>
+                    <span>${(cartDetails!.final_amount * 1.18).toFixed(2)}</span>
                   </div>
                 </div>
 
                 {/* Coupon code */}
-                {!appliedCoupon && (
+                {!cartDetails!.applied_coupon && (
                   <div className="mt-6">
                     <label className="text-sm font-medium text-gray-700 mb-1 block">
                       Apply Coupon

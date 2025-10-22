@@ -1,259 +1,312 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Search, Calendar, User, ArrowRight } from 'lucide-react'
+import { Search, Calendar, User, ArrowRight, Clock } from 'lucide-react'
+import { BlogService } from '../services/blogService'
+import { useAsync, usePagination } from '../hooks/useLoading'
+import { Blog } from '../types/api'
+import { PageLoading } from '../components/ui/Loading'
+import toast from 'react-hot-toast'
 
-interface BlogPost {
-  id: string
-  title: string
-  excerpt: string
-  content: string
-  author: string
-  date: string
-  category: string
-  image: string
-  readTime: string
-  tags: string[]
-}
-
-export default function Blog() {
+export default function BlogPage() {
+  const [blogs, setBlogs] = useState<Blog[]>([])
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([])
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('All')
+  const [selectedCategory, setSelectedCategory] = useState<string>('all')
 
-  const categories = ['All', 'Technology', 'Education', 'Design', 'Business', 'Development']
+  // Pagination
+  const { 
+    page, 
+    perPage, 
+    total, 
+    totalPages, 
+    hasNextPage, 
+    hasPrevPage,
+    nextPage,
+    prevPage,
+    setTotal,
+    setIsLoading: setPaginationLoading 
+  } = usePagination(1, 9)
 
-  const blogPosts: BlogPost[] = [
-    {
-      id: '1',
-      title: 'Getting Started with Modern Web Development',
-      excerpt: 'Learn the fundamentals of modern web development with React, TypeScript, and Tailwind CSS.',
-      content: 'Full content here...',
-      author: 'John Doe',
-      date: '2024-10-15',
-      category: 'Development',
-      image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800',
-      readTime: '5 min read',
-      tags: ['React', 'TypeScript', 'Web Development'],
-    },
-    {
-      id: '2',
-      title: 'The Future of Online Education',
-      excerpt: 'Exploring how technology is transforming the way we learn and teach in the digital age.',
-      content: 'Full content here...',
-      author: 'Jane Smith',
-      date: '2024-10-12',
-      category: 'Education',
-      image: 'https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=800',
-      readTime: '7 min read',
-      tags: ['Education', 'Technology', 'E-Learning'],
-    },
-    {
-      id: '3',
-      title: 'Design Principles for Better User Experience',
-      excerpt: 'Understanding the core principles that make digital products intuitive and enjoyable to use.',
-      content: 'Full content here...',
-      author: 'Mike Johnson',
-      date: '2024-10-10',
-      category: 'Design',
-      image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800',
-      readTime: '6 min read',
-      tags: ['UX', 'Design', 'UI'],
-    },
-    {
-      id: '4',
-      title: 'Building Scalable Applications with Cloud Technology',
-      excerpt: 'A comprehensive guide to deploying and scaling modern applications in the cloud.',
-      content: 'Full content here...',
-      author: 'Sarah Williams',
-      date: '2024-10-08',
-      category: 'Technology',
-      image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800',
-      readTime: '8 min read',
-      tags: ['Cloud', 'DevOps', 'Scalability'],
-    },
-    {
-      id: '5',
-      title: 'Effective Strategies for Remote Team Management',
-      excerpt: 'Best practices for leading and managing distributed teams in the modern workplace.',
-      content: 'Full content here...',
-      author: 'David Brown',
-      date: '2024-10-05',
-      category: 'Business',
-      image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800',
-      readTime: '6 min read',
-      tags: ['Management', 'Remote Work', 'Leadership'],
-    },
-    {
-      id: '6',
-      title: 'Introduction to Machine Learning for Beginners',
-      excerpt: 'Start your journey into artificial intelligence with this beginner-friendly guide.',
-      content: 'Full content here...',
-      author: 'Emily Davis',
-      date: '2024-10-03',
-      category: 'Technology',
-      image: 'https://images.unsplash.com/photo-1555255707-c07966088b7b?w=800',
-      readTime: '10 min read',
-      tags: ['AI', 'Machine Learning', 'Python'],
-    },
-  ]
+  // Async hooks for data fetching
+  const { execute: fetchBlogs, isLoading: blogsLoading } = useAsync(BlogService.getBlogs)
+  const { execute: fetchCategories, isLoading: categoriesLoading } = useAsync(BlogService.getBlogCategories)
 
-  const filteredPosts = blogPosts.filter((post) => {
-    const matchesSearch =
-      post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      post.excerpt.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = selectedCategory === 'All' || post.category === selectedCategory
-    return matchesSearch && matchesCategory
-  })
+  useEffect(() => {
+    loadBlogs()
+  }, [page, selectedCategory, searchTerm])
+
+  useEffect(() => {
+    loadCategories()
+  }, [])
+
+  const loadBlogs = async () => {
+    try {
+      setPaginationLoading(true)
+      const filters = {
+        page,
+        per_page: perPage,
+        search: searchTerm || undefined,
+        category_id: selectedCategory !== 'all' ? selectedCategory : undefined,
+        is_published: true,
+        sort_by: 'created_at' as const,
+        sort_order: 'desc' as const
+      }
+      
+      const response = await fetchBlogs(filters)
+      if (response) {
+        setBlogs(response.items)
+        setTotal(response.total)
+      }
+    } catch (error) {
+      toast.error('Failed to load blogs')
+      console.error('Error loading blogs:', error)
+    } finally {
+      setPaginationLoading(false)
+    }
+  }
+
+  const loadCategories = async () => {
+    try {
+      const categoriesData = await fetchCategories()
+      if (categoriesData) {
+        setCategories(categoriesData)
+      }
+    } catch (error) {
+      console.error('Error loading categories:', error)
+    }
+  }
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    // Search will be triggered by useEffect when searchTerm changes
+  }
+
+  const isLoading = blogsLoading || categoriesLoading
+
+  if (isLoading && blogs.length === 0) {
+    return <PageLoading />
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-20">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-16 px-4">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center"
-          >
-            <h1 className="text-5xl font-bold mb-4">Our Blog</h1>
-            <p className="text-xl text-primary-100 max-w-2xl mx-auto">
-              Insights, tutorials, and stories about education, technology, and innovation
-            </p>
-          </motion.div>
+      <div className="bg-white border-b border-gray-200">
+        <div className="container mx-auto px-4 py-12">
+          <div className="text-center">
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-4xl font-bold text-gray-900 mb-4"
+            >
+              Our Blog
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-xl text-gray-600 mb-8"
+            >
+              Insights, tutorials, and stories from our learning community
+            </motion.p>
+
+            {/* Search Bar */}
+            <motion.form
+              onSubmit={handleSearch}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="max-w-md mx-auto"
+            >
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Search articles..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+            </motion.form>
+          </div>
         </div>
-      </section>
+      </div>
 
-      {/* Search and Filter Section */}
-      <section className="max-w-7xl mx-auto px-4 -mt-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="card"
-        >
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search articles..."
-                className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
-              />
-            </div>
-
-            {/* Category Filter */}
-            <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
-              {categories.map((category) => (
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar */}
+          <div className="lg:w-64">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="font-semibold text-gray-900 mb-4">Categories</h3>
+              <div className="space-y-2">
                 <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${
-                    selectedCategory === category
-                      ? 'bg-primary-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  onClick={() => setSelectedCategory('all')}
+                  className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                    selectedCategory === 'all'
+                      ? 'bg-primary-100 text-primary-600'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                   }`}
                 >
-                  {category}
+                  All Articles
                 </button>
-              ))}
+                {categories.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => setSelectedCategory(category.id)}
+                    className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                      selectedCategory === category.id
+                        ? 'bg-primary-100 text-primary-600'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                  >
+                    {category.name}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </motion.div>
-      </section>
 
-      {/* Blog Posts Grid */}
-      <section className="max-w-7xl mx-auto px-4 py-12">
-        {filteredPosts.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-xl text-gray-600">No articles found. Try adjusting your search.</p>
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredPosts.map((post, index) => (
-              <motion.div
-                key={post.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Link to={`/blog/${post.id}`}>
-                  <div className="card p-0 overflow-hidden hover:shadow-xl transition-shadow h-full flex flex-col">
-                    <div className="relative h-48 overflow-hidden">
-                      <img
-                        src={post.image}
-                        alt={post.title}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                      />
-                      <div className="absolute top-4 left-4">
-                        <span className="bg-primary-600 text-white px-3 py-1 rounded-full text-xs font-medium">
-                          {post.category}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="p-6 flex-1 flex flex-col">
-                      <div className="flex items-center text-sm text-gray-500 mb-3">
-                        <Calendar className="w-4 h-4 mr-1" />
-                        <span>{new Date(post.date).toLocaleDateString()}</span>
-                        <span className="mx-2">•</span>
-                        <span>{post.readTime}</span>
-                      </div>
-
-                      <h3 className="text-xl font-bold text-gray-900 mb-3 hover:text-primary-600 transition-colors">
-                        {post.title}
-                      </h3>
-
-                      <p className="text-gray-600 mb-4 flex-1">{post.excerpt}</p>
-
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                        <div className="flex items-center text-sm text-gray-700">
-                          <User className="w-4 h-4 mr-1" />
-                          <span>{post.author}</span>
-                        </div>
-                        <div className="flex items-center text-primary-600 font-medium text-sm">
-                          Read More
-                          <ArrowRight className="w-4 h-4 ml-1" />
-                        </div>
+          {/* Blog Grid */}
+          <div className="flex-1">
+            {blogsLoading ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, index) => (
+                  <div key={index} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="animate-pulse">
+                      <div className="h-48 bg-gray-200"></div>
+                      <div className="p-6 space-y-3">
+                        <div className="h-4 bg-gray-200 rounded"></div>
+                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
                       </div>
                     </div>
                   </div>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </section>
+                ))}
+              </div>
+            ) : blogs.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="max-w-md mx-auto">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No articles found</h3>
+                  <p className="text-gray-500">Try adjusting your search or filters</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                  {blogs.map((blog, index) => (
+                    <motion.article
+                      key={blog.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow group"
+                    >
+                      <div className="relative">
+                        <img
+                          src={blog.featured_image || 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=600'}
+                          alt={blog.title}
+                          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute top-4 left-4">
+                          <span className="px-2 py-1 bg-primary-600 text-white text-xs font-medium rounded">
+                            {blog.category_name || 'Article'}
+                          </span>
+                        </div>
+                      </div>
 
-      {/* Newsletter Section */}
-      <section className="bg-white py-16 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Subscribe to Our Newsletter
-            </h2>
-            <p className="text-gray-600 mb-8">
-              Get the latest articles and updates delivered to your inbox
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
-              />
-              <button className="bg-primary-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-700 transition-colors">
-                Subscribe
-              </button>
-            </div>
-          </motion.div>
+                      <div className="p-6">
+                        <div className="flex items-center text-sm text-gray-500 mb-3">
+                          <User className="w-4 h-4 mr-1" />
+                          <span>{blog.author_name || 'Admin'}</span>
+                          <Calendar className="w-4 h-4 ml-4 mr-1" />
+                          <span>{new Date(blog.created_at).toLocaleDateString()}</span>
+                        </div>
+
+                        <h2 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-primary-600 transition-colors">
+                          {blog.title}
+                        </h2>
+
+                        <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                          {blog.excerpt}
+                        </p>
+
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center text-sm text-gray-500">
+                            <Clock className="w-4 h-4 mr-1" />
+                            <span>{Math.ceil(blog.content?.length / 1000) || 5} min read</span>
+                          </div>
+
+                          <Link
+                            to={`/blog/${blog.slug || blog.id}`}
+                            className="inline-flex items-center text-primary-600 hover:text-primary-700 font-medium text-sm transition-colors"
+                          >
+                            Read More
+                            <ArrowRight className="w-4 h-4 ml-1" />
+                          </Link>
+                        </div>
+                      </div>
+                    </motion.article>
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-600">
+                      Showing {((page - 1) * perPage) + 1} to {Math.min(page * perPage, total)} of {total} articles
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={prevPage}
+                        disabled={!hasPrevPage}
+                        className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Previous
+                      </button>
+
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          const pageNum = page <= 3 ? i + 1 : page - 2 + i
+                          if (pageNum <= totalPages) {
+                            return (
+                              <button
+                                key={pageNum}
+                                onClick={() => {/* TODO: Add page navigation */}}
+                                className={`px-3 py-2 rounded-md text-sm ${
+                                  pageNum === page
+                                    ? 'bg-primary-600 text-white'
+                                    : 'border border-gray-300 hover:bg-gray-50'
+                                }`}
+                              >
+                                {pageNum}
+                              </button>
+                            )
+                          }
+                          return null
+                        })}
+                      </div>
+
+                      <button
+                        onClick={nextPage}
+                        disabled={!hasNextPage}
+                        className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
-      </section>
+      </div>
     </div>
   )
 }

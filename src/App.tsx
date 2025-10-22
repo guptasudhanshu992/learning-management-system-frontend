@@ -3,6 +3,7 @@ import { AuthProvider } from './contexts/AuthContext'
 import { CartProvider } from './contexts/CartContext'
 import { WishlistProvider } from './contexts/WishlistContext'
 import { PaymentProvider } from './contexts/PaymentContext'
+import ErrorBoundary from './components/ErrorBoundary'
 import MainLayout from './layouts/MainLayout'
 import Home from './pages/Home'
 import Blog from './pages/Blog'
@@ -28,36 +29,55 @@ import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
   return (
-    <AuthProvider>
-      <WishlistProvider>
-        <CartProvider>
-          <PaymentProvider>
-            <Routes>
+    <ErrorBoundary>
+      <AuthProvider>
+        <WishlistProvider>
+          <CartProvider>
+            <PaymentProvider>
+              <Routes>
               {/* Public Routes with Header/Footer */}
               <Route element={<MainLayout />}>
                 <Route path="/" element={<Home />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/courses" element={<Courses />} />
                 <Route path="/courses/:id" element={<CourseDetail />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/wishlist" element={<Wishlist />} />
+                <Route path="/cart" element={
+                  <ProtectedRoute>
+                    <Cart />
+                  </ProtectedRoute>
+                } />
+                <Route path="/checkout" element={
+                  <ProtectedRoute>
+                    <Checkout />
+                  </ProtectedRoute>
+                } />
+                <Route path="/wishlist" element={
+                  <ProtectedRoute>
+                    <Wishlist />
+                  </ProtectedRoute>
+                } />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/:id" element={<BlogDetail />} />
                 <Route path="/contact" element={<Contact />} />
                 
                 {/* Auth Routes with Header/Footer */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password/:token" element={<ResetPassword />} />
+                <Route path="/auth/login" element={<Login />} />
+                <Route path="/auth/register" element={<Register />} />
+                <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+                <Route path="/auth/reset-password/:token" element={<ResetPassword />} />
+                
+                {/* Legacy auth route redirects */}
+                <Route path="/login" element={<Navigate to="/auth/login" replace />} />
+                <Route path="/register" element={<Navigate to="/auth/register" replace />} />
+                <Route path="/forgot-password" element={<Navigate to="/auth/forgot-password" replace />} />
+                <Route path="/reset-password/:token" element={<Navigate to="/auth/reset-password/:token" replace />} />
               </Route>
 
               {/* Protected Admin Routes */}
               <Route
                 path="/admin"
                 element={
-                  <ProtectedRoute requiredRole="admin">
+                  <ProtectedRoute adminOnly>
                     <AdminLayout />
                   </ProtectedRoute>
                 }
@@ -78,6 +98,7 @@ function App() {
         </CartProvider>
       </WishlistProvider>
     </AuthProvider>
+    </ErrorBoundary>
   )
 }
 
