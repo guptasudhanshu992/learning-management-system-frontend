@@ -282,7 +282,7 @@ export interface RetryConfig {
 }
 
 export const DEFAULT_RETRY_CONFIG: RetryConfig = {
-  maxAttempts: 3,
+  maxAttempts: 1,
   delay: 1000,
   backoff: 2
 }

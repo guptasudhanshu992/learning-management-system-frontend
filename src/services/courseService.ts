@@ -1,4 +1,4 @@
-import apiClient from './api';
+import apiClient, { apiSilent } from './api';
 import { Course, CourseFilters, CreateCourseData, UpdateCourseData, PaginatedResponse } from '../types/api';
 
 export class CourseService {
@@ -6,7 +6,7 @@ export class CourseService {
    * Get all courses with filters and pagination
    */
   static async getCourses(filters: CourseFilters = {}): Promise<PaginatedResponse<Course>> {
-    const { data } = await apiClient.get('/courses', {
+    const { data } = await apiSilent.get('/courses', {
       params: filters
     });
     return data;
@@ -16,7 +16,7 @@ export class CourseService {
    * Get a specific course by ID
    */
   static async getCourseById(id: string): Promise<Course> {
-    const { data } = await apiClient.get(`/courses/${id}`);
+    const { data } = await apiSilent.get(`/courses/${id}`);
     return data;
   }
 
@@ -47,7 +47,7 @@ export class CourseService {
    * Get featured courses
    */
   static async getFeaturedCourses(limit: number = 6): Promise<Course[]> {
-    const { data } = await apiClient.get('/courses', {
+    const { data } = await apiSilent.get('/courses', {
       params: { is_featured: true, per_page: limit }
     });
     return data.items || data;
@@ -57,7 +57,7 @@ export class CourseService {
    * Get courses by category
    */
   static async getCoursesByCategory(categoryId: string, page: number = 1, per_page: number = 10): Promise<PaginatedResponse<Course>> {
-    const { data } = await apiClient.get('/courses', {
+    const { data } = await apiSilent.get('/courses', {
       params: { category_id: categoryId, page, per_page }
     });
     return data;
@@ -67,7 +67,7 @@ export class CourseService {
    * Search courses
    */
   static async searchCourses(query: string, page: number = 1, per_page: number = 10): Promise<PaginatedResponse<Course>> {
-    const { data } = await apiClient.get('/courses', {
+    const { data } = await apiSilent.get('/courses', {
       params: { search: query, page, per_page }
     });
     return data;
@@ -77,7 +77,7 @@ export class CourseService {
    * Get course categories
    */
   static async getCategories(): Promise<Array<{ id: string; name: string; course_count?: number }>> {
-    const { data } = await apiClient.get('/categories');
+    const { data } = await apiSilent.get('/categories');
     return data;
   }
 

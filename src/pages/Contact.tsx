@@ -8,7 +8,12 @@ import {
   Send, 
   MessageCircle, 
   HelpCircle,
-  ChevronRight
+  ChevronRight,
+  Facebook,
+  Twitter,
+  Instagram,
+  Linkedin,
+  Youtube
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -99,6 +104,15 @@ export default function Contact() {
       answer: 'Log in to your account and navigate to "My Courses" section.'
     }
   ]
+
+  // Social media icons mapping
+  const socialIcons = {
+    facebook: Facebook,
+    twitter: Twitter,
+    instagram: Instagram,
+    linkedin: Linkedin,
+    youtube: Youtube
+  }
 
   // Animation variants
   const containerVariants = {
@@ -241,7 +255,7 @@ export default function Contact() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                       Your Name <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -250,12 +264,13 @@ export default function Contact() {
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
-                      className="form-input w-full rounded-md"
+                      className="input-field"
+                      placeholder="Enter your full name"
                       required
                     />
                   </div>
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                       Your Email <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -264,14 +279,15 @@ export default function Contact() {
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      className="form-input w-full rounded-md"
+                      className="input-field"
+                      placeholder="your.email@example.com"
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
                     Subject
                   </label>
                   <select
@@ -279,7 +295,7 @@ export default function Contact() {
                     name="subject"
                     value={formData.subject}
                     onChange={handleChange}
-                    className="form-select w-full rounded-md"
+                    className="input-field"
                   >
                     <option value="">Please select</option>
                     <option value="general">General Inquiry</option>
@@ -292,7 +308,7 @@ export default function Contact() {
                 </div>
 
                 <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
                     Message <span className="text-red-500">*</span>
                   </label>
                   <textarea
@@ -301,7 +317,8 @@ export default function Contact() {
                     rows={5}
                     value={formData.message}
                     onChange={handleChange}
-                    className="form-textarea w-full rounded-md"
+                    className="input-field resize-none"
+                    placeholder="Tell us about your inquiry..."
                     required
                   ></textarea>
                 </div>
@@ -310,10 +327,13 @@ export default function Contact() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="btn-primary w-full flex items-center justify-center"
+                    className="btn-primary flex items-center justify-center"
                   >
                     {isSubmitting ? (
-                      <>Processing...</>
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Sending...
+                      </>
                     ) : (
                       <>
                         Send Message
@@ -417,23 +437,23 @@ export default function Contact() {
             </p>
             
             <div className="flex justify-center space-x-6">
-              {['facebook', 'twitter', 'instagram', 'linkedin', 'youtube'].map((social) => (
-                <motion.a
-                  key={social}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  href={`https://${social}.com`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-white/10 p-3 rounded-full hover:bg-white/20 transition-colors"
-                >
-                  <img 
-                    src={`/icons/${social}.svg`} 
-                    alt={`${social} icon`} 
-                    className="w-6 h-6" 
-                  />
-                </motion.a>
-              ))}
+              {(['facebook', 'twitter', 'instagram', 'linkedin', 'youtube'] as const).map((social) => {
+                const IconComponent = socialIcons[social]
+                return (
+                  <motion.a
+                    key={social}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                    href={`https://${social}.com`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-white/10 p-3 rounded-full hover:bg-white/20 transition-colors group"
+                    aria-label={`Follow us on ${social}`}
+                  >
+                    <IconComponent className="w-6 h-6 text-white group-hover:text-primary-100 transition-colors" />
+                  </motion.a>
+                )
+              })}
             </div>
             
             <p className="mt-8 text-primary-200 text-sm">

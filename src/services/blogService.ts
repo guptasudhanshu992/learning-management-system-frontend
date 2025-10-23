@@ -1,4 +1,4 @@
-import apiClient from './api';
+import apiClient, { apiSilent } from './api';
 import { Blog, BlogCreate, PaginatedResponse } from '../types/api';
 
 export interface BlogFilters {
@@ -25,7 +25,7 @@ export class BlogService {
    * Get all blogs with filters and pagination
    */
   static async getBlogs(filters: BlogFilters = {}): Promise<PaginatedResponse<Blog>> {
-    const { data } = await apiClient.get('/blogs', {
+    const { data } = await apiSilent.get('/blogs', {
       params: filters
     });
     return data;
@@ -35,7 +35,7 @@ export class BlogService {
    * Get a specific blog by ID
    */
   static async getBlogById(id: string): Promise<Blog> {
-    const { data } = await apiClient.get(`/blogs/${id}`);
+    const { data } = await apiSilent.get(`/blogs/${id}`);
     return data;
   }
 
@@ -43,7 +43,7 @@ export class BlogService {
    * Get a blog by slug
    */
   static async getBlogBySlug(slug: string): Promise<Blog> {
-    const { data } = await apiClient.get(`/blogs/slug/${slug}`);
+    const { data } = await apiSilent.get(`/blogs/slug/${slug}`);
     return data;
   }
 
@@ -74,7 +74,7 @@ export class BlogService {
    * Get featured blogs
    */
   static async getFeaturedBlogs(limit: number = 6): Promise<Blog[]> {
-    const { data } = await apiClient.get('/blogs/featured', {
+    const { data } = await apiSilent.get('/blogs/featured', {
       params: { limit }
     });
     return data;
@@ -84,7 +84,7 @@ export class BlogService {
    * Get recent blogs
    */
   static async getRecentBlogs(limit: number = 10): Promise<Blog[]> {
-    const { data } = await apiClient.get('/blogs', {
+    const { data } = await apiSilent.get('/blogs', {
       params: { 
         per_page: limit, 
         sort_by: 'created_at', 
@@ -99,7 +99,7 @@ export class BlogService {
    * Get blogs by category
    */
   static async getBlogsByCategory(categoryId: string, page: number = 1, per_page: number = 10): Promise<PaginatedResponse<Blog>> {
-    const { data } = await apiClient.get('/blogs', {
+    const { data } = await apiSilent.get('/blogs', {
       params: { category_id: categoryId, page, per_page, is_published: true }
     });
     return data;
@@ -109,7 +109,7 @@ export class BlogService {
    * Search blogs
    */
   static async searchBlogs(query: string, page: number = 1, per_page: number = 10): Promise<PaginatedResponse<Blog>> {
-    const { data } = await apiClient.get('/blogs', {
+    const { data } = await apiSilent.get('/blogs', {
       params: { search: query, page, per_page, is_published: true }
     });
     return data;
@@ -134,7 +134,7 @@ export class BlogService {
    * Get blog categories
    */
   static async getBlogCategories(): Promise<Array<{ id: string; name: string; blog_count?: number }>> {
-    const { data } = await apiClient.get('/blog-categories');
+    const { data } = await apiSilent.get('/blog-categories');
     return data;
   }
 

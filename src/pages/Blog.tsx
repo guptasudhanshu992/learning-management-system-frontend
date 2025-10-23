@@ -6,7 +6,8 @@ import { BlogService } from '../services/blogService'
 import { useAsync, usePagination } from '../hooks/useLoading'
 import { Blog } from '../types/api'
 import { PageLoading } from '../components/ui/Loading'
-import toast from 'react-hot-toast'
+import { BlogsEmptyState, SearchEmptyState } from '../components/ui/EmptyState'
+import { handleDataLoadError, retryOperation } from '../utils/errorHandling'
 
 export default function BlogPage() {
   const [blogs, setBlogs] = useState<Blog[]>([])
@@ -53,14 +54,20 @@ export default function BlogPage() {
         sort_order: 'desc' as const
       }
       
-      const response = await fetchBlogs(filters)
-      if (response) {
+      const response = await retryOperation(() => fetchBlogs(filters))
+      if (response && response.items) {
         setBlogs(response.items)
         setTotal(response.total)
+      } else {
+        // No blogs found - this is normal, not an error
+        setBlogs([])
+        setTotal(0)
       }
     } catch (error) {
-      toast.error('Failed to load blogs')
-      console.error('Error loading blogs:', error)
+      // Handle error gracefully - log but don't show toast for data loading
+      handleDataLoadError(error, 'Blogs Loading')
+      setBlogs([]) // Ensure empty state is shown
+      setTotal(0)
     } finally {
       setPaginationLoading(false)
     }
@@ -68,12 +75,17 @@ export default function BlogPage() {
 
   const loadCategories = async () => {
     try {
-      const categoriesData = await fetchCategories()
-      if (categoriesData) {
+      const categoriesData = await retryOperation(() => fetchCategories())
+      if (categoriesData && categoriesData.length > 0) {
         setCategories(categoriesData)
+      } else {
+        // No categories found - this is normal, not an error
+        setCategories([])
       }
     } catch (error) {
-      console.error('Error loading categories:', error)
+      // Handle error gracefully - log but don't show toast for data loading
+      handleDataLoadError(error, 'Blog Categories Loading')
+      setCategories([]) // Ensure empty state is handled
     }
   }
 
@@ -186,15 +198,14 @@ export default function BlogPage() {
                 ))}
               </div>
             ) : blogs.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="max-w-md mx-auto">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Search className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No articles found</h3>
-                  <p className="text-gray-500">Try adjusting your search or filters</p>
-                </div>
-              </div>
+              searchTerm ? (
+                <SearchEmptyState 
+                  query={searchTerm}
+                  onClear={() => setSearchTerm('')}
+                />
+              ) : (
+                <BlogsEmptyState onRetry={loadBlogs} />
+              )
             ) : (
               <>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">

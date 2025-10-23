@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { BookOpen, Users, Award, TrendingUp, ArrowRight, CheckCircle, Star, Clock } from 'lucide-react'
@@ -12,17 +12,19 @@ import { FeaturedCoursesEmptyState, BlogsEmptyState } from '../components/ui/Emp
 export default function Home() {
   const [featuredCourses, setFeaturedCourses] = useState<Course[]>([])
   const [recentBlogs, setRecentBlogs] = useState<Blog[]>([])
+  
+  // Refs to prevent multiple loading attempts
+  const coursesLoaded = useRef(false)
+  const blogsLoaded = useRef(false)
 
   // Async hooks for data fetching
   const { execute: fetchFeaturedCourses, isLoading: coursesLoading } = useAsync(CourseService.getFeaturedCourses)
   const { execute: fetchRecentBlogs, isLoading: blogsLoading } = useAsync(BlogService.getRecentBlogs)
 
-  useEffect(() => {
-    loadFeaturedCourses()
-    loadRecentBlogs()
-  }, [])
-
   const loadFeaturedCourses = async () => {
+    if (coursesLoaded.current) return
+    coursesLoaded.current = true
+    
     try {
       const courses = await retryOperation(() => fetchFeaturedCourses(6))
       if (courses && courses.length > 0) {
@@ -39,6 +41,9 @@ export default function Home() {
   }
 
   const loadRecentBlogs = async () => {
+    if (blogsLoaded.current) return
+    blogsLoaded.current = true
+    
     try {
       const blogs = await retryOperation(() => fetchRecentBlogs(3))
       if (blogs && blogs.length > 0) {
@@ -53,6 +58,21 @@ export default function Home() {
       setRecentBlogs([]) // Ensure empty state is shown
     }
   }
+
+  const retryFeaturedCourses = async () => {
+    coursesLoaded.current = false
+    await loadFeaturedCourses()
+  }
+
+  const retryRecentBlogs = async () => {
+    blogsLoaded.current = false
+    await loadRecentBlogs()
+  }
+
+  useEffect(() => {
+    loadFeaturedCourses()
+    loadRecentBlogs()
+  }, [])
 
   const features = [
     {
@@ -377,7 +397,7 @@ export default function Home() {
             </div>
           ) : (
             <FeaturedCoursesEmptyState 
-              onRetry={loadFeaturedCourses} 
+              onRetry={retryFeaturedCourses} 
               loading={coursesLoading} 
             />
           )}
@@ -481,7 +501,7 @@ export default function Home() {
             </div>
           ) : (
             <BlogsEmptyState 
-              onRetry={loadRecentBlogs} 
+              onRetry={retryRecentBlogs} 
               loading={blogsLoading} 
             />
           )}
