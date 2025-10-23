@@ -6,7 +6,7 @@ import {
   Filter,
   Star,
   Users,
-  BookOpen,
+
   Heart,
   ShoppingCart,
   Play,
@@ -21,6 +21,8 @@ import { WishlistService } from '../services/wishlistService'
 import { useAsync, usePagination } from '../hooks/useLoading'
 import { Course } from '../types/api'
 import { PageLoading, LoadingSpinner } from '../components/ui/Loading'
+import { CoursesEmptyState, SearchEmptyState } from '../components/ui/EmptyState'
+import { handleDataLoadError, handleActionError } from '../utils/errorHandling'
 import toast from 'react-hot-toast'
 
 export default function Courses() {
@@ -83,8 +85,9 @@ export default function Courses() {
         setTotal(response.total)
       }
     } catch (error) {
-      toast.error('Failed to load courses')
-      console.error('Error loading courses:', error)
+      // Handle gracefully - don't show error toast for initial data loading
+      handleDataLoadError(error, 'Courses Loading')
+      setCourses([]) // Ensure empty state is shown
     } finally {
       setPaginationLoading(false)
     }
@@ -97,7 +100,7 @@ export default function Courses() {
         setCategories(categoriesData)
       }
     } catch (error) {
-      console.error('Error loading categories:', error)
+      handleDataLoadError(error, 'Categories Loading')
     }
   }
 
@@ -107,7 +110,7 @@ export default function Courses() {
       addToCart({ id: courseId } as any) // Update context
       toast.success('Added to cart!')
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Failed to add to cart')
+      handleActionError(error, 'Add to Cart', 'Unable to add course to cart. Please try again.')
     }
   }
 
@@ -125,7 +128,7 @@ export default function Courses() {
         toast.success('Added to wishlist!')
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Failed to update wishlist')
+      handleActionError(error, 'Update Wishlist', 'Unable to update wishlist. Please try again.')
     }
   }
 
@@ -245,11 +248,17 @@ export default function Courses() {
                 ))}
               </div>
             ) : courses.length === 0 ? (
-              <div className="text-center py-12">
-                <BookOpen className="mx-auto w-16 h-16 text-gray-300 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No courses found</h3>
-                <p className="text-gray-500">Try adjusting your search or filters</p>
-              </div>
+              searchTerm ? (
+                <SearchEmptyState 
+                  query={searchTerm} 
+                  onClear={() => setSearchTerm('')}
+                />
+              ) : (
+                <CoursesEmptyState 
+                  onRetry={loadCourses} 
+                  loading={isLoading}
+                />
+              )
             ) : (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">

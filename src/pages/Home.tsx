@@ -6,6 +6,8 @@ import { CourseService } from '../services/courseService'
 import { BlogService } from '../services/blogService'
 import { useAsync } from '../hooks/useLoading'
 import { Course, Blog } from '../types/api'
+import { handleDataLoadError, retryOperation } from '../utils/errorHandling'
+import { FeaturedCoursesEmptyState, BlogsEmptyState } from '../components/ui/EmptyState'
 
 export default function Home() {
   const [featuredCourses, setFeaturedCourses] = useState<Course[]>([])
@@ -22,23 +24,33 @@ export default function Home() {
 
   const loadFeaturedCourses = async () => {
     try {
-      const courses = await fetchFeaturedCourses(6)
-      if (courses) {
+      const courses = await retryOperation(() => fetchFeaturedCourses(6))
+      if (courses && courses.length > 0) {
         setFeaturedCourses(courses)
+      } else {
+        // No courses found - this is normal, not an error
+        setFeaturedCourses([])
       }
     } catch (error) {
-      console.error('Error loading featured courses:', error)
+      // Handle error gracefully - log but don't show toast for data loading
+      handleDataLoadError(error, 'Featured Courses Loading')
+      setFeaturedCourses([]) // Ensure empty state is shown
     }
   }
 
   const loadRecentBlogs = async () => {
     try {
-      const blogs = await fetchRecentBlogs(3)
-      if (blogs) {
+      const blogs = await retryOperation(() => fetchRecentBlogs(3))
+      if (blogs && blogs.length > 0) {
         setRecentBlogs(blogs)
+      } else {
+        // No blogs found - this is normal, not an error
+        setRecentBlogs([])
       }
     } catch (error) {
-      console.error('Error loading recent blogs:', error)
+      // Handle error gracefully - log but don't show toast for data loading
+      handleDataLoadError(error, 'Recent Blogs Loading')
+      setRecentBlogs([]) // Ensure empty state is shown
     }
   }
 
@@ -294,7 +306,7 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          ) : (
+          ) : featuredCourses.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
               {featuredCourses.map((course, index) => (
                 <motion.div
@@ -363,17 +375,24 @@ export default function Home() {
                 </motion.div>
               ))}
             </div>
+          ) : (
+            <FeaturedCoursesEmptyState 
+              onRetry={loadFeaturedCourses} 
+              loading={coursesLoading} 
+            />
           )}
 
-          <div className="text-center">
-            <Link
-              to="/courses"
-              className="inline-flex items-center bg-primary-600 text-white px-8 py-3 rounded-lg hover:bg-primary-700 transition-colors font-semibold"
-            >
+          {featuredCourses.length > 0 && (
+            <div className="text-center">
+              <Link
+                to="/courses"
+                className="inline-flex items-center bg-primary-600 text-white px-8 py-3 rounded-lg hover:bg-primary-700 transition-colors font-semibold"
+              >
               View All Courses
               <ArrowRight className="ml-2 w-5 h-5" />
             </Link>
-          </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -409,7 +428,7 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          ) : (
+          ) : recentBlogs.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
               {recentBlogs.map((blog, index) => (
                 <motion.div
@@ -460,17 +479,24 @@ export default function Home() {
                 </motion.div>
               ))}
             </div>
+          ) : (
+            <BlogsEmptyState 
+              onRetry={loadRecentBlogs} 
+              loading={blogsLoading} 
+            />
           )}
 
-          <div className="text-center">
-            <Link
-              to="/blog"
-              className="inline-flex items-center bg-primary-600 text-white px-8 py-3 rounded-lg hover:bg-primary-700 transition-colors font-semibold"
-            >
-              View All Articles
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Link>
-          </div>
+          {recentBlogs.length > 0 && (
+            <div className="text-center">
+              <Link
+                to="/blog"
+                className="inline-flex items-center bg-primary-600 text-white px-8 py-3 rounded-lg hover:bg-primary-700 transition-colors font-semibold"
+              >
+                View All Articles
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
